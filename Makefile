@@ -1,22 +1,29 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -std=c11
-LIBS = -lm
+LIBS = -lm -lcheck -lsubunit
 
 TARGET = s21_matrix.a
 
-SRCS = *.c
+SRCS = $(wildcard *.c)
 
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)
 
-$(TARGET): $(filter-out main.o, $(OBJS))
+$(TARGET): $(OBJS)
 	@ar rcs $@ $^
 	@ranlib $@
 	@rm $^
 
+main: $(TARGET)
+	@$(CC) $(CFLAGS) tests/main.c s21_matrix.a $(LIBS) -o tests/main
+	@tests/main
+
+valmain: main
+	@valgrind --tool=memcheck --leak-check=full tests/main
+
 test: $(TARGET)
-	@$(CC) $(CFLAGS) tests/*.c $^ -o tests/test
+	@$(CC) $(CFLAGS) tests/general.c s21_matrix.a $(LIBS) -o tests/test
 	@tests/test
 
 %.o: %.c
